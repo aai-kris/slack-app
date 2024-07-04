@@ -135,14 +135,12 @@ async def slack_events(request: Request):
         # Event is an engineer reaction being added
         if event.type == 'reaction_added':
 
-            # Check if the reaction already exists
-            # if not check_reaction(event.item.channel, event.item.ts, "engineer"):
-
-            # Get the content of the message
+            # Get the content of the message if the emoji is being used for the first time on the message
             message = message_handler(event.item.channel, event.item.ts, "engineer")
-            print(message)
-            print("Run a function to add a ticket to Jira")
 
+            if message:
+                print(message)
+                print("Run a function to add a ticket to Jira")
 
         if event.type == 'reaction_removed':
             logging.info(f"User {event.user} removed reaction {event.reaction} to item {event.item.channel} by user {event.item_user}")
