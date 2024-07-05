@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Optional
 
 class Reactions(BaseModel):
     name: str
@@ -9,6 +9,8 @@ class Reactions(BaseModel):
 class Message(BaseModel):
     user: str
     text: str
+    channel: str
+    ts: str
     reactions: Reactions
 
 class ItemEvent(BaseModel):
