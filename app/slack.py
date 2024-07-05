@@ -97,4 +97,3 @@ def message_handler(channel: str, timestamp: str, reaction: str) -> Message:
     except Exception as e:
         logging.error(f"Error fetching message content: {e}")
         return None
-

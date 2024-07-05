@@ -17,27 +17,21 @@ async def slack_events(request: Request):
     if payload.get("type") == "url_verification":
         return {"challenge": payload.get("challenge")}
 
-    # Parse the event
+    # Parse the initial Slack event
     event = parse_slack_payload(payload)
 
-    # Engineer Reaction Detected and does not already exist
-    if event.reaction == "engineer":
+    # Check for engineer reaction being added
+    if event.reaction == "engineer" and event.type == "reaction_added":
 
-        # Event is an engineer reaction being added
-        if event.type == 'reaction_added':
+        # Get the content of the message if the emoji is being used for the first time
+        message = message_handler(event.item.channel, event.item.ts, "engineer")
 
-            # Get the content of the message if the emoji is being used for the first time on the message
-            message = message_handler(event.item.channel, event.item.ts, "engineer")
+        # create a Jira ticket if the message object returns
+        if message:
+            create_jira_ticket(message)
+            return {"status": "ok"}
 
-            if message:
-
-                create_jira_ticket(message)
-
-
-        if event.type == 'reaction_removed':
-            logging.info(f"User {event.user} removed reaction {event.reaction} to item {event.item.channel} by user {event.item_user}")
-
-    return {"status": "ok"}
+    return None
 
 
 if __name__ == "__main__":
