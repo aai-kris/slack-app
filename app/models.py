@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional
 
+class Person:
+    name: str
+    email: str
+
 class Reactions(BaseModel):
     name: str
     user: str
