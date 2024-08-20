@@ -6,7 +6,7 @@ import requests
 import logging
 import os
 from dotenv import load_dotenv
-from app.models import ReactionEvent, ItemEvent, Message, Reactions
+from app.models import ReactionEvent, ItemEvent, Message, Reactions, Person
 from app.jira import create_jira_ticket
 import hashlib
 import sqlite3
@@ -62,14 +62,15 @@ def is_engineer_reaction(channel: str, timestamp: str, reaction: str) -> bool:
         logging.error(f"Error checking reactions: {e}")
         return False
 
-def get_user_email(user_id: str) -> str:
+
+def get_user_info(user_id: str) -> Person:
     try:
         response = slack_client.users_info(user=user_id)
-        email = response.get("user", {}).get("profile", {}).get("email", "")
-        return email
+        user_info = response.get("user", {}).get("profile", {})
+        return Person(name=user_info.get("real_name", ""), email=user_info.get("email", ""))
     except Exception as e:
-        logging.error(f"Error fetching user email: {e}")
-        return ""
+        logging.error(f"Error fetching user info: {e}")
+        return Person(name="", email="")
 
 def message_handler(channel: str, timestamp: str, reaction: str) -> Message:
     try:
@@ -90,17 +91,16 @@ def message_handler(channel: str, timestamp: str, reaction: str) -> Message:
 
                 reactions = Reactions(
                     name=reactions[0].get("name"),
-                    user=get_user_email(users[0]),
+                    user=get_user_info(users[0]),
                     count=reactions[0].get("count")
                 )
                 message = Message(
-                    user=get_user_email(messages[0].get("user", None)),
+                    user=get_user_info(messages[0].get("user", None)),
                     text=messages[0].get("text", None),
                     channel=channel,
                     ts=timestamp,
                     reactions=reactions
                 )
-
                 return message
             return None
     except Exception as e:
@@ -115,15 +115,14 @@ def post_message_to_slack(message, jiraID, jiraUrl):
     }
     payload = {
         "channel": message.channel,
-        "text": f"Your request has been picked up by {message.reactions.user} \n\n <{jiraUrl}|{jiraID}>",
+        "text": f"Your request has been picked up by {message.reactions.user.name} \n\n <{jiraUrl}|{jiraID}>",
         "thread_ts": message.ts
     }
     response = requests.post(slack_url, headers=headers, json=payload)
     if response.status_code == 200:
-        print("Message posted to Slack successfully.")
+        logging.info("Message posted to Slack successfully.")
     else:
-        print(f"Failed to post message to Slack: {response.status_code}")
-        print(response.text)
+        logging.error(f"Failed to post message to Slack: {response.status_code}, {response.text}")
 
 def generate_idempotency_key(event: ReactionEvent) -> str:
     key_string = f"{event.type}-{event.user}-{event.item.channel}-{event.item.ts}-{event.reaction}"
@@ -155,11 +154,13 @@ def slack_handler(payload):
         logging.info(f"Event with idempotency key {idempotency_key} already processed.")
         return {"status": "ignored"}
 
+
     # Check for engineer reaction being added
     if event.reaction == SLACK_EMOJI and event.type == "reaction_added":
 
         # Get the content of the message if the emoji is being used for the first time
         message = message_handler(event.item.channel, event.item.ts, SLACK_EMOJI)
+        logging.info(message)
 
         # create a Jira ticket if the message object returns
         if message:

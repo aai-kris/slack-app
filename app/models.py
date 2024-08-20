@@ -1,17 +1,19 @@
 from pydantic import BaseModel
 from typing import Optional
+from dataclasses import dataclass
 
+@dataclass
 class Person:
     name: str
     email: str
 
 class Reactions(BaseModel):
     name: str
-    user: str
+    user: Person
     count: int
 
 class Message(BaseModel):
-    user: str
+    user: Person
     text: str
     channel: str
     ts: str

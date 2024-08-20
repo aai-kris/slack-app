@@ -50,11 +50,11 @@ def get_jira_account_id(email) -> str:
         if users:
             return users[0]['accountId']
         else:
-            print(f"No user found with email: {email}")
+            logging.error(f"No user found with email: {email}")
             return None
     else:
-        print(f"Failed to search for user: {response.status_code}")
-        print(response.text)
+        logging.error(f"Failed to search for user: {response.status_code}")
+        logging.error(response.text)
         return None
 
 def create_jira_ticket(message: Message) -> [str]:
@@ -80,7 +80,7 @@ def create_jira_ticket(message: Message) -> [str]:
                 "project": {
                     "key": project_key
                 },
-                "summary": f"Slack Request {message.user}",
+                "summary": f"Slack Request from {message.user.name}",
                 "description": {
                     "type": "doc",
                     "version": 1,
@@ -130,24 +130,31 @@ def create_jira_ticket(message: Message) -> [str]:
                     "key": parent_key
                 },
                 "assignee": {
-                    "accountId": get_jira_account_id(message.reactions.user)
+                    "accountId": get_jira_account_id(message.reactions.user.email)
+                    # "accountId": get_jira_account_id(message.reactions.user)
                 },
                 "reporter": {
-                    "accountId": get_jira_account_id(message.user)
+                    "accountId": get_jira_account_id(message.user.email)
                 },
                 "customfield_10020": get_current_sprint(board_id)
             }
         }
+        logging.info(f"Creating Jira ticket with payload: {payload}")
         response = requests.post(url, json=payload, headers=headers, auth=auth)
         response.raise_for_status()
+        logging.info(f"Jira ticket created successfully: {response.json()}")
 
         issue_key = response.json().get("key")
-        jira_issue_url = f"{JIRA_URL}/browse/{issue_key}"
+        logging.info(f"Jira ticket key: {issue_key}")
 
-        logging.info(f"Jira ticket created successfully: {response.json()}")
+        jira_issue_url = f"{JIRA_URL}/browse/{issue_key}"
+        logging.info(f"Jira ticket url: {jira_issue_url}")
 
         return [issue_key, jira_issue_url]
 
-
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f"HTTP error occurred: {http_err.response.content}")
+        return None
     except Exception as e:
         logging.error(f"Error creating Jira ticket: {e}")
+        return None
