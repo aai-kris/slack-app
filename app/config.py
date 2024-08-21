@@ -1,14 +1,14 @@
 channel_jira_mapping = {
-    "C07AE1A1DJ6": {
-        "slack_name": "random",
-        "project_key": "NEX",
-        "board_id": "3",
-        "epic": "NEX-2"
+    "C04E4KFCHPF": {
+        "slack_name": "ask-platform-engineering",
+        "project_key": "POPS",
+        "board_id": "95",
+        "epic": "POPS-716"
     },
-    "C07ASLVS8C9": {
-        "slack_name": "general",
-        "project_key": "NEX",
-        "board_id": "3",
-        "epic": "NEX-58"
+    "C05KNEH4EE5": {
+        "slack_name": "ask-accounts-billing",
+        "project_key": "PE",
+        "board_id": "97",
+        "epic": "PE-474"
     }
 }

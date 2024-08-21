@@ -61,9 +61,9 @@ def create_jira_ticket(message: Message) -> [str]:
     try:
         mapping = channel_jira_mapping.get(message.channel)
 
-        project_key = mapping.get("project_key", "DEFAULT_PROJECT_KEY")
-        parent_key = mapping.get("epic", "DEFAULT_EPIC_KEY")
-        board_id = mapping.get("board_id", "DEFAULT_BOARD_ID")
+        project_key = mapping.get("project_key", "TPM")
+        parent_key = mapping.get("epic", "TPM-36")
+        board_id = mapping.get("board_id", "45")
 
         url = f"{JIRA_URL}/rest/api/3/issue"
         auth = (JIRA_USERNAME, JIRA_API_TOKEN)
@@ -131,7 +131,6 @@ def create_jira_ticket(message: Message) -> [str]:
                 },
                 "assignee": {
                     "accountId": get_jira_account_id(message.reactions.user.email)
-                    # "accountId": get_jira_account_id(message.reactions.user)
                 },
                 "reporter": {
                     "accountId": get_jira_account_id(message.user.email)
